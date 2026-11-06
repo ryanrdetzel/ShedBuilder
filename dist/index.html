@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f7f2">
+<meta name="description" content="Design a shed, explore its framing, and compare material costs.">
+<title>Shed Workshop</title>
+<link rel="stylesheet" href="styles.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="./" aria-label="Shed Workshop home"><span class="brand-mark" data-icon="shed"></span>Shed<span class="brand-second">Workshop</span></a>
+    <div class="header-actions"><span class="saved"><i></i><span id="save-status">Saved on this device</span></span><button class="button small" id="reset" type="button"><span data-icon="reset"></span> Reset design</button></div>
+  </div>
+</header>
+<main class="workspace">
+  <div class="intro">
+    <div><p class="eyebrow"><span></span> THE BUILDING BENCH</p><h1>Shed designer</h1><p>Draw it, look inside, and see what it takes to build.</p></div>
+    <div class="intro-meta"><span class="pill" data-icon="ruler"></span><div><small>FOOTPRINT</small><strong id="area">192 sq ft</strong></div></div>
+  </div>
+  <div class="workbench">
+    <aside class="panel setup" aria-label="Design settings">
+      <header class="panel-heading"><span class="panel-icon" data-icon="settings"></span><div><h2>Design</h2><p>Set the shape and openings.</p></div></header>
+      <section class="panel-section dimensions">
+        <h3>Dimensions</h3>
+        <div class="input-grid">
+          <label>Width <span class="number-field"><input id="width" type="number" min="6" max="24" step="any" placeholder="12"><span>ft</span></span></label>
+          <label>Length <span class="number-field"><input id="length" type="number" min="6" max="24" step="any" placeholder="16"><span>ft</span></span></label>
+          <label>Wall height <span class="number-field"><input id="height" type="number" min="7" max="12" step="any" placeholder="8"><span>ft</span></span></label>
+          <label>Stud spacing <select id="spacing"><option value="16">16 in OC</option><option value="24">24 in OC</option></select></label>
+        </div>
+        <p class="field-note">Blank dimensions use the placeholder.</p>
+      </section>
+      <section class="panel-section">
+        <h3>Roof</h3>
+        <div id="roof-options" class="roof-options" role="group" aria-label="Roof style">
+          <button type="button" class="roof-option" data-roof="gable"><span data-icon="gable"></span>Gable</button>
+          <button type="button" class="roof-option" data-roof="lean"><span data-icon="lean"></span>Lean-to</button>
+        </div>
+        <div class="input-grid roof-fields">
+          <label>Pitch <select id="pitch"><option value="2">2:12</option><option value="3">3:12</option><option value="4">4:12</option><option value="5">5:12</option><option value="6">6:12</option><option value="8">8:12</option><option value="10">10:12</option></select></label>
+          <label>Overhang <select id="overhang"><option value="0">0 in</option><option value="6">6 in</option><option value="8">8 in</option><option value="12">12 in</option><option value="16">16 in</option><option value="24">24 in</option></select></label>
+        </div>
+      </section>
+      <section class="panel-section">
+        <h3>Openings <span id="opening-count" class="count"></span></h3>
+        <div id="opening-list" class="opening-list"></div>
+        <div class="input-grid add-opening">
+          <button type="button" class="button small" data-add="door"><span data-icon="plus"></span> Door</button>
+          <button type="button" class="button small" data-add="window"><span data-icon="plus"></span> Window</button>
+        </div>
+        <p id="opening-note" class="field-note" role="status"></p>
+      </section>
+    </aside>
+
+    <section class="panel viewer" aria-label="Shed preview">
+      <div class="viewer-top">
+        <div class="segments" role="group" aria-label="Drawing view">
+          <button type="button" data-view="model" aria-pressed="true"><span data-icon="cube"></span> 3D view</button>
+          <button type="button" data-view="plan" aria-pressed="false"><span data-icon="plan"></span> Floor plan</button>
+        </div>
+        <span class="viewer-label" id="viewer-label">LIVE MODEL</span>
+      </div>
+      <div class="stage" id="stage">
+        <canvas id="model" tabindex="0" aria-label="Interactive shed model. Use arrow keys to orbit or drag with your pointer."></canvas>
+        <div class="stage-tools" id="stage-tools" aria-label="Camera controls">
+          <button type="button" id="zoom-in" data-icon="plus" title="Zoom in" aria-label="Zoom in"></button>
+          <button type="button" id="zoom-out" data-icon="minus" title="Zoom out" aria-label="Zoom out"></button>
+          <button type="button" id="home-camera" data-icon="fit" title="Reset camera" aria-label="Reset camera"></button>
+        </div>
+        <div class="canvas-inspector" id="inspector" hidden></div>
+        <div class="stage-caption" id="stage-caption"><span data-icon="pointer"></span> Drag to orbit <b>·</b> Scroll to zoom <b>·</b> Click to inspect</div>
+      </div>
+      <div class="viewer-bottom" id="viewer-bottom">
+        <div class="segments layers" role="group" aria-label="Model layers">
+          <button type="button" data-layer="exterior" aria-pressed="true"><span data-icon="shed"></span> Exterior</button>
+          <button type="button" data-layer="framing" aria-pressed="false"><span data-icon="layers"></span> Framing</button>
+        </div>
+        <div class="view-actions">
+          <button type="button" class="button small" id="roof-toggle" aria-pressed="false"><span data-icon="gable"></span> Hide roof</button>
+          <button type="button" class="button small" id="section-toggle" aria-pressed="false"><span data-icon="section"></span> Section</button>
+        </div>
+      </div>
+      <div class="section-controls" id="section-controls" hidden>
+        <label>Cut axis <select id="axis"><option value="z">Front to back</option><option value="x">Side to side</option><option value="y">Top to bottom</option></select></label>
+        <label class="range-label">Cut depth <input id="cut-depth" type="range" min="0" max="100" value="50" step="1"><output id="depth-value">50%</output></label>
+        <button class="button small" type="button" id="flip-cut" aria-pressed="false">Flip cut</button>
+      </div>
+    </section>
+
+    <aside class="panel estimate" aria-label="Materials and comparison">
+      <header class="panel-heading"><span class="panel-icon" data-icon="receipt"></span><div><h2>Materials</h2><p>Quantities update with the model.</p></div></header>
+      <div class="cost-block">
+        <div><span class="cost-label">ESTIMATED MATERIALS</span><strong id="total">$0</strong></div>
+        <button type="button" class="button small" id="edit-prices">Edit prices</button>
+      </div>
+      <div id="estimate-tabs" class="tabs" role="tablist" aria-label="Estimate views">
+        <button type="button" data-tab="buy" role="tab" aria-controls="estimate-content" aria-selected="true">Shopping</button>
+        <button type="button" data-tab="cuts" role="tab" aria-controls="estimate-content" aria-selected="false">Cuts</button>
+        <button type="button" data-tab="compare" role="tab" aria-controls="estimate-content" aria-selected="false">Compare</button>
+      </div>
+      <div class="estimate-content" id="estimate-content" role="tabpanel" tabindex="0"></div>
+      <footer class="estimate-footer"><button type="button" class="button wide" id="export"><span data-icon="download"></span> Export shopping &amp; cuts</button><p id="pricing-note">Sample prices in USD.</p></footer>
+    </aside>
+  </div>
+  <footer class="workspace-footer"><span data-icon="info"></span> Concept model. Verify member sizing, connectors, and local requirements before building.</footer>
+</main>
+
+<dialog id="opening-dialog">
+  <form id="opening-form">
+    <header class="dialog-heading"><div><p class="eyebrow">OPENING DETAILS</p><h2 id="opening-title"></h2></div><button type="button" class="icon-button close-dialog" data-icon="close" aria-label="Close"></button></header>
+    <div class="input-grid">
+      <label>Wall <select id="opening-wall"><option value="front">Front</option><option value="right">Right</option><option value="back">Back</option><option value="left">Left</option></select></label>
+      <label>Offset <span class="number-field"><input id="opening-offset" required type="number" min="0" step="0.25"><span>in</span></span></label>
+      <label>Width <span class="number-field"><input id="opening-width" required type="number" min="12" step="0.25"><span>in</span></span></label>
+      <label>Height <span class="number-field"><input id="opening-height" required type="number" min="12" step="0.25"><span>in</span></span></label>
+      <label id="sill-label">Sill height <span class="number-field"><input id="opening-sill" required type="number" min="0" step="0.25"><span>in</span></span></label>
+    </div>
+    <p class="field-note" id="opening-help"></p>
+    <p class="error" id="opening-error" role="alert" hidden></p>
+    <footer class="dialog-footer"><button type="button" class="button danger" id="remove-opening">Remove</button><button type="submit" class="button primary">Apply opening</button></footer>
+  </form>
+</dialog>
+<dialog id="prices-dialog">
+  <form id="prices-form">
+    <header class="dialog-heading"><div><p class="eyebrow">MATERIAL ESTIMATE</p><h2>Unit prices</h2></div><button type="button" class="icon-button close-dialog" data-icon="close" aria-label="Close"></button></header>
+    <p class="dialog-sub">Enter your own prices in USD. The estimate updates when you apply them.</p>
+    <div id="price-fields"></div>
+    <footer class="dialog-footer"><button class="button" id="reset-prices" type="button">Restore samples</button><button class="button primary" type="submit">Apply prices</button></footer>
+  </form>
+</dialog>
+<dialog id="reset-dialog">
+  <form method="dialog"><header class="dialog-heading"><h2>Reset this design?</h2></header><p class="dialog-sub">This restores the starter shed. Your unit prices will stay saved.</p><footer class="dialog-footer"><button class="button" value="cancel">Cancel</button><button class="button primary" value="reset">Reset design</button></footer></form>
+</dialog>
+</body>
+</html>
